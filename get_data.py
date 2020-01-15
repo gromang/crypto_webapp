@@ -43,41 +43,50 @@ class CryptoData:
         logging.info(f"Formed candle time: {ts}")
         return ts
 
-    def connection_to_base():
-        conn = psycopg2.connect(database=database['database'],
-                                user=database['user'],
-                                password=database['password'],
-                                host=database['host'],
-                                port=database['port'],
-                                )
+    def connection_to_base(self):
+        try:
+            conn = psycopg2.connect(
+                database=dbsettings['database'],
+                user=dbsettings['user'],
+                password=dbsettings['password'],
+                host=dbsettings['host'],
+                port=dbsettings['port'],
+            )
+            return conn
+        except psycopg2.Error as e:
+            # Обратить внимание, что при отсутсвии коннекта -ошибка в лог не пишется, исправить
+            logging.error(e.pgerror())
+            return False
 
-        print("База данных успешно открыта")
-        return conn
+    def get_last_time(self, table_name: str):
+        try:
+            with self.connection_to_base() as conn:
+                with conn.cursor() as curs:
+                    # забираем таймстамп последней записи
+                    curs.execute(
+                        f'''SELECT "Timestamp" FROM {table_name} WHERE id=(SELECT max(id) FROM {table_name})'''
+                    )
+                    timestamp = curs.fetchone()[0]
+                    return timestamp
+        except:
+            logging.error("get_last_time Error")
+            return False
 
-    def retrieving_table_data(table_database: str):
-        my_list = []
-        with connection_to_base() as conn:
-            with conn.cursor() as curs:
-                curs.execute(
-                    f'''SELECT * FROM "{table_database}" '''
-                )
-
-                for record in curs:
-                    value = datetime.fromtimestamp(record[1])
-                    my_list.append({
-                        "id": record[0],
-                        "Timestamp": value.strftime('%d-%m-%Y %H:%M:%S'),
-                        "Open": float(record[2]),
-                        "Close": float(record[3]),
-                        "High": float(record[4]),
-                        "Low": float(record[5]),
-                        "Volume": float(record[6])
-                    })
-
-        print('Таблица успешно прочитана')
-        conn.close()
-        return my_list
+    def get_start_interval(self, interval):
 
 
 if __name__ == "__main__":
-    retrieving_table_data('crypto_project')
+    f = CryptoData("BTCUSD", 60, 100)
+    print(f.get_last_time("data_btc"))
+
+ # for record in curs:
+#     value = datetime.fromtimestamp(record[1])
+#     my_list.append({
+#         "id": record[0],
+#         "Timestamp": value.strftime('%d-%m-%Y %H:%M:%S'),
+#         "Open": float(record[2]),
+#         "Close": float(record[3]),
+#         "High": float(record[4]),
+#         "Low": float(record[5]),
+#         "Volume": float(record[6])
+#     })
