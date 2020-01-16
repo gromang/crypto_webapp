@@ -14,10 +14,12 @@ logging.info(f'-------------------{now}-------------------')
 
 
 class CryptoData:
+    """
+        symbol: тикет криптовалюты, 
+        interval : размер свечи в минутах, например 4-х часовая свеча - 240 минут, 
+        depth: глубина выдаваемых данных, например, 50 свечей
+    """
     def __init__(self, symbol, interval: int, depth):
-        """
-        interval : candle interval in minutes, for example, 4 hour = 240 min
-        """
         self.symbol = symbol
         self.interval = interval
         self.depth = depth
@@ -61,59 +63,80 @@ class CryptoData:
             logging.error(e.pgerror())
             return False
 
-    def get_last_time(self, table_name: str):
-        try:
-            with self.connection_to_base() as conn:
-                with conn.cursor() as curs:
-                    # забираем таймстамп последней записи
-                    curs.execute(
-                        f'''SELECT "Timestamp" FROM {table_name} WHERE id=(SELECT max(id) FROM {table_name})'''
-                    )
-                    timestamp = curs.fetchone()[0]
-                    return timestamp
-        except:
-            logging.error("get_last_time Error")
-            return False
+    def get_last_time(self):
+        table_name = "data_btc"
+        with self.connection_to_base() as conn:
+            with conn.cursor() as curs:
+                # забираем таймштамп последней записи
+                curs.execute(
+                    f'''SELECT "Timestamp" FROM {table_name} WHERE id=(SELECT max(id) FROM {table_name})'''
+                )
+                timestamp = curs.fetchone()[0]
+                return timestamp
+        logging.error("get_last_time Error")
+        return False
 
-    def get_start_interval(self):
-        # функция определяет с какого времени начинается последний интервал.
-        # Например, в 14.49 пришел запрос на отображение 50-ти 15-ти минутных свечей.
-        # Общепринято отображение свечи начинать не с произвольного места,
-        # а привязывать интервал свечи к известным временным делениям.
-        # То есть, начало последнего интервала - 14.45
-        # Для 30-ти минутной свечи - 14.30
-        # Часовая свеча - 14.00
-        # 4-х часовая - 12.00
-        # и так далее
+    def get_last_interval(self):
+        '''
+        Функция определяет время начала последнего интервала. 
+        Например, в 14.49 пришел запрос на отображение 15-ти минутных свечей. 
+        Отображение свечи нужно начинать не с произвольного места, 
+        а привязывать к известным временным делениям. 
+        То есть,для нашего примера крайний интервал начинается в 14.45, 
+        а для 30-ти минутной свечи - 14.30, часовой свечи - 14.00 и т.д.
+        '''
         interval = self.interval
-        current_timestamp = self.get_last_time("data_btc") or self.get_previous_candle_time()
+        # Определим текущее время и заберем значение минуты и часа
+        current_timestamp = self.get_last_time() or self.get_previous_candle_time()
         current_minute = int(datetime.fromtimestamp(current_timestamp).strftime("%M"))
-        if 0 < interval < 2:
-            return current_timestamp
+        current_hour = int(datetime.fromtimestamp(current_timestamp).strftime("%H"))
+        # Если интервал - минутный, то достаточно вернуть текущее время
+        if interval == 1:
+            difference = 0
         elif interval in (2,3,5,10,15,20,30):
-            start_interval_timestamp = current_timestamp - (current_minute % interval)*60
-            return start_interval_timestamp
+            difference = (current_minute % interval)*60
         elif interval in (60,120,180,240,360,720):
-            current_hour = int(datetime.fromtimestamp(current_timestamp).strftime("%H"))
-            differense = (current_hour % (interval/60))*3600
-            start_interval_timestamp = current_timestamp - differense - current_minute*60
-            return start_interval_timestamp
+            difference = ((current_hour % (interval/60))*60 + current_minute)*60
         else:
             return False
+        begin_interval_timestamp = current_timestamp - difference
+        last_interval = {"begin": begin_interval_timestamp, "end":current_timestamp}
+        return last_interval
+
+    def get_data_edges(self):
+        last_interval = self.get_last_interval()
+        first_edge_data = last_interval['begin'] - self.interval*self.depth*60
+        last_edge_data = last_interval['end']
+        data_edges = {"begin":first_edge_data, "end":last_edge_data}
+        return data_edges
+
+    def get_raw_data(self):
+        data_edges = self.get_data_edges()
+        raw_data_list=[]
+        table_name = "data_btc"
+        with self.connection_to_base() as conn:
+            with conn.cursor() as curs:
+                curs.execute(
+                    f'''SELECT * FROM {table_name} WHERE "Timestamp" >= {data_edges['begin']}'''
+                )
+                for record in curs:
+                    value = datetime.fromtimestamp(record[1])
+                    raw_data_list.append({
+                        "Time": value.strftime('%d-%m-%Y %H:%M:%S'),
+                        "Open": float(record[2]),
+                        "Close": float(record[3]),
+                        "High": float(record[4]),
+                        "Low": float(record[5]),
+                        "Volume": float(record[6])
+                    })
+        return raw_data_list
+
+    def make_new_candles(self):
+        raw_data = self.get_raw_data()
+        
+
 
 
 if __name__ == "__main__":
-    test = CryptoData("BTCUSD",180, 100)
-    print(datetime.fromtimestamp(test.get_start_interval()).strftime("%Y-%m-%d %H:%M"))
-
-# for record in curs:
-#     value = datetime.fromtimestamp(record[1])
-#     my_list.append({
-#         "id": record[0],
-#         "Timestamp": value.strftime('%d-%m-%Y %H:%M:%S'),
-#         "Open": float(record[2]),
-#         "Close": float(record[3]),
-#         "High": float(record[4]),
-#         "Low": float(record[5]),
-#         "Volume": float(record[6])
-#     })
+    test = CryptoData("BTCUSD",5, 12)
+    print(test.get_raw_data())
