@@ -19,6 +19,7 @@ class CryptoData:
         interval : размер свечи в минутах, например 4-х часовая свеча - 240 минут, 
         depth: глубина выдаваемых данных, например, 50 свечей
     """
+
     def __init__(self, symbol, interval: int, depth):
         self.symbol = symbol
         self.interval = interval
@@ -88,31 +89,35 @@ class CryptoData:
         interval = self.interval
         # Определим текущее время и заберем значение минуты и часа
         current_timestamp = self.get_last_time() or self.get_previous_candle_time()
-        current_minute = int(datetime.fromtimestamp(current_timestamp).strftime("%M"))
-        current_hour = int(datetime.fromtimestamp(current_timestamp).strftime("%H"))
+        current_minute = int(datetime.fromtimestamp(
+            current_timestamp).strftime("%M"))
+        current_hour = int(datetime.fromtimestamp(
+            current_timestamp).strftime("%H"))
         # Если интервал - минутный, то достаточно вернуть текущее время
         if interval == 1:
             difference = 0
-        elif interval in (2,3,5,10,15,20,30):
+        elif interval in (2, 3, 5, 10, 15, 20, 30):
             difference = (current_minute % interval)*60
-        elif interval in (60,120,180,240,360,720):
-            difference = ((current_hour % (interval/60))*60 + current_minute)*60
+        elif interval in (60, 120, 180, 240, 360, 720):
+            difference = ((current_hour % (interval/60))
+                          * 60 + current_minute)*60
         else:
             return False
         begin_interval_timestamp = current_timestamp - difference
-        last_interval = {"begin": begin_interval_timestamp, "end":current_timestamp}
+        last_interval = {"begin": begin_interval_timestamp,
+                         "end": current_timestamp}
         return last_interval
 
     def get_data_edges(self):
         last_interval = self.get_last_interval()
         first_edge_data = last_interval['begin'] - self.interval*self.depth*60
         last_edge_data = last_interval['end']
-        data_edges = {"begin":first_edge_data, "end":last_edge_data}
+        data_edges = {"begin": first_edge_data, "end": last_edge_data}
         return data_edges
 
     def get_raw_data(self):
         data_edges = self.get_data_edges()
-        raw_data_list=[]
+        raw_data_list = []
         table_name = "data_btc"
         with self.connection_to_base() as conn:
             with conn.cursor() as curs:
@@ -120,9 +125,10 @@ class CryptoData:
                     f'''SELECT * FROM {table_name} WHERE "Timestamp" >= {data_edges['begin']}'''
                 )
                 for record in curs:
-                    value = datetime.fromtimestamp(record[1])
+                    #value = datetime.fromtimestamp(record[1])
                     raw_data_list.append({
-                        "Time": value.strftime('%d-%m-%Y %H:%M:%S'),
+                        "Timestamp": int(record[1]),
+                        # "Time": value.strftime('%d-%m-%Y %H:%M:%S'),
                         "Open": float(record[2]),
                         "Close": float(record[3]),
                         "High": float(record[4]),
@@ -133,10 +139,38 @@ class CryptoData:
 
     def make_new_candles(self):
         raw_data = self.get_raw_data()
-        
 
+        candle_list = []
+        candle_time = raw_data[0]["Timestamp"]
+        candle_open = raw_data[0]["Open"]
+        candle_high = raw_data[0]["High"]
+        candle_low = raw_data[0]["Low"]
+        candle_vol = 0
+        candle_list.append({"Timestamp": candle_time, "Open": candle_open})
+        i = 0
+
+        for id, item in enumerate(raw_data):
+            candle_end_time = candle_time + self.interval * 60
+            if item["Timestamp"] < candle_end_time and not item["Timestamp"] == raw_data[-1]["Timestamp"]:
+                if item["High"] > candle_high:
+                    candle_high = item["High"]
+                if item["Low"] < candle_low:
+                    candle_low = item["Low"]
+                candle_vol += candle_vol
+            elif item["Timestamp"] == candle_end_time or item["Timestamp"] == raw_data[-1]["Timestamp"]:
+                candle_list[i].update(
+                    {"Close": raw_data[id-1]["Close"], "High": candle_high, "Low": candle_low, "Volume": candle_vol})
+                i += 1
+                candle_time = item["Timestamp"]
+                candle_open = item["Open"]
+                candle_high = item["High"]
+                candle_low = item["Low"]
+                candle_vol = 0
+                candle_list.append(
+                    {"Timestamp": candle_time, "Open": candle_open})
+        return candle_list
 
 
 if __name__ == "__main__":
-    test = CryptoData("BTCUSD",5, 12)
-    print(test.get_raw_data())
+    test = CryptoData("BTCUSD", 5, 10)
+    print(test.make_new_candles())
