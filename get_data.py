@@ -14,7 +14,10 @@ logging.info(f'-------------------{now}-------------------')
 
 
 class CryptoData:
-    def __init__(self, symbol, interval, depth):
+    def __init__(self, symbol, interval: int, depth):
+        """
+        interval : candle interval in minutes, for example, 4 hour = 240 min
+        """
         self.symbol = symbol
         self.interval = interval
         self.depth = depth
@@ -72,14 +75,38 @@ class CryptoData:
             logging.error("get_last_time Error")
             return False
 
-    def get_start_interval(self, interval):
+    def get_start_interval(self):
+        # функция определяет с какого времени начинается последний интервал.
+        # Например, в 14.49 пришел запрос на отображение 50-ти 15-ти минутных свечей.
+        # Общепринято отображение свечи начинать не с произвольного места,
+        # а привязывать интервал свечи к известным временным делениям.
+        # То есть, начало последнего интервала - 14.45
+        # Для 30-ти минутной свечи - 14.30
+        # Часовая свеча - 14.00
+        # 4-х часовая - 12.00
+        # и так далее
+        interval = self.interval
+        current_timestamp = self.get_last_time("data_btc") or self.get_previous_candle_time()
+        current_minute = int(datetime.fromtimestamp(current_timestamp).strftime("%M"))
+        if 0 < interval < 2:
+            return current_timestamp
+        elif interval in (2,3,5,10,15,20,30):
+            start_interval_timestamp = current_timestamp - (current_minute % interval)*60
+            return start_interval_timestamp
+        elif interval in (60,120,180,240,360,720):
+            current_hour = int(datetime.fromtimestamp(current_timestamp).strftime("%H"))
+            differense = (current_hour % (interval/60))*3600
+            start_interval_timestamp = current_timestamp - differense - current_minute*60
+            return start_interval_timestamp
+        else:
+            return False
 
 
 if __name__ == "__main__":
-    f = CryptoData("BTCUSD", 60, 100)
-    print(f.get_last_time("data_btc"))
+    test = CryptoData("BTCUSD",180, 100)
+    print(datetime.fromtimestamp(test.get_start_interval()).strftime("%Y-%m-%d %H:%M"))
 
- # for record in curs:
+# for record in curs:
 #     value = datetime.fromtimestamp(record[1])
 #     my_list.append({
 #         "id": record[0],
