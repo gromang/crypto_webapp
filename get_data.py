@@ -6,27 +6,28 @@ import csv
 
 from datetime import datetime
 
-from config import dbsettings
+from config import dbsettings, pair_table
 
 now = datetime.now()
-logging.basicConfig(filename=f"{os.getcwd()}\logs\{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,
+logging.basicConfig(filename=f"{os.getcwd()}\\logs\\{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,
                     filemode="a", format='%(levelname)s %(asctime)s : %(message)s')
 logging.info(f'-------------------{now}-------------------')
 
 
 class CryptoData:
     """
-        symbol: тикет криптовалюты
+        symbol: тикет криптовалюты. Запись вида: BTCUSD
 
         interval : размер свечи в минутах, например 4-х часовая свеча - 240 минут
 
         depth: глубина выдаваемых данных, например, 50 свечей
     """
 
-    def __init__(self, symbol, interval: int, depth):
-        self.symbol = symbol
+    def __init__(self, symbol: str, interval: int, depth: int):
+        self.symbol = symbol.lower()
         self.interval = interval
         self.depth = depth
+        self.table_name = pair_table[self.symbol]
 
     def __get_previous_candle_time__(self):
         try:
@@ -68,12 +69,11 @@ class CryptoData:
             return False
 
     def __get_last_time__(self):
-        table_name = "data_btc"
         with self.__connection_to_base__() as conn:
             with conn.cursor() as curs:
                 # забираем таймштамп последней записи
                 curs.execute(
-                    f'''SELECT "Timestamp" FROM {table_name} WHERE id=(SELECT max(id) FROM {table_name})'''
+                    f'''SELECT "Timestamp" FROM {self.table_name} WHERE id=(SELECT max(id) FROM {self.table_name})'''
                 )
                 timestamp = curs.fetchone()[0]
                 return timestamp
@@ -122,11 +122,10 @@ class CryptoData:
     def get_raw_data(self):
         data_edges = self.__get_data_edges__()
         raw_data_list = []
-        table_name = "data_btc"
         with self.__connection_to_base__() as conn:
             with conn.cursor() as curs:
                 curs.execute(
-                    f'''SELECT * FROM {table_name} WHERE "Timestamp" >= {data_edges['begin']}'''
+                    f'''SELECT * FROM {self.table_name} WHERE "Timestamp" >= {data_edges['begin']}'''
                 )
                 for record in curs:
                     #value = datetime.fromtimestamp(record[1])
@@ -140,12 +139,10 @@ class CryptoData:
                         "Volume": float(record[6])
                     })
         return raw_data_list
-    
-    def __check_raw_data__(self):
-        pass
 
-    def get_new_candles_sql(self):
-        pass
+    def __check_raw_data__(self): pass
+
+    def get_new_candles_sql(self): pass
 
     def make_new_candles_dict(self):
         raw_data = self.get_raw_data()
@@ -188,9 +185,23 @@ class CryptoData:
                 candle_vol = 0
         return candle_list
 
+    # def __convert_timestamp__(self, timestamp_data: int):
+    #     this_time = datetime.fromtimestamp(timestamp_data)
+    #     if this_time.hour == 0 and this_time.minute == 0:
+    #         new_time = this_time.strftime('%d-%m %H:%M')
+    #     else:
+    #         new_time = this_time.strftime('%H:%M')
+    #     return new_time
+
+    def __convert_timestamp__(self, timestamp_data: int):
+        new_time = datetime.fromtimestamp(
+            timestamp_data).strftime('%d-%m %H:%M')
+        return new_time
+
     def data_for_plotly(self):
         raw_data = self.get_raw_data()
-        plot_data = []
+
+        plot_data = {}
         time_list = []
         open_list = []
         close_list = []
@@ -203,46 +214,53 @@ class CryptoData:
         candle_high = raw_data[0]["High"]
         candle_low = raw_data[0]["Low"]
         candle_vol = 0
-        candle_list.append({"Timestamp": candle_time, "Open": candle_open})
-        i = 0
+
+        time_list.append(self.__convert_timestamp__(candle_time))
+        open_list.append(candle_open)
 
         for id, item in enumerate(raw_data):
             candle_end_time = candle_time + self.interval * 60
+
             if item["Timestamp"] < candle_end_time and not item["Timestamp"] == raw_data[-1]["Timestamp"]:
                 if item["High"] > candle_high:
                     candle_high = item["High"]
                 if item["Low"] < candle_low:
                     candle_low = item["Low"]
                 candle_vol += item["Volume"]
+
             elif item["Timestamp"] >= candle_end_time:
-                candle_list[i].update(
-                    {"Close": raw_data[id-1]["Close"], "High": candle_high, "Low": candle_low, "Volume": candle_vol})
-                i += 1
+                close_list.append(raw_data[id-1]["Close"])
+                high_list.append(candle_high)
+                low_list.append(candle_low)
+                vol_list.append(candle_vol)
+
                 candle_time = item["Timestamp"]
                 candle_open = item["Open"]
                 candle_high = item["High"]
                 candle_low = item["Low"]
                 candle_vol = 0
-                candle_list.append(
-                    {"Timestamp": candle_time, "Open": candle_open})
+
+                time_list.append(self.__convert_timestamp__(candle_time))
+                open_list.append(candle_open)
+
             elif item["Timestamp"] == raw_data[-1]["Timestamp"]:
-                candle_list[i].update(
-                    {"Close": raw_data[id-1]["Close"], "High": candle_high, "Low": candle_low, "Volume": candle_vol})
-                candle_time = item["Timestamp"]
-                candle_open = item["Open"]
-                candle_high = item["High"]
-                candle_low = item["Low"]
-                candle_vol = 0
+                close_list.append(raw_data[id-1]["Close"])
+                high_list.append(candle_high)
+                low_list.append(candle_low)
+                vol_list.append(candle_vol)
+
+        plot_data = {"datetime": time_list, "open": open_list, "close": close_list,
+                     "high": high_list, "low": low_list, "volume": vol_list}
 
         return plot_data
 
 
-
 if __name__ == "__main__":
-    test = CryptoData("BTCUSD", 30, 20)
+    test = CryptoData("LTCUSD", 30, 20)
     data = test.get_raw_data()
-    with open("rrr.csv", "w", newline='') as out_file:
-        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames = ["Timestamp","Open","Close","High","Low", "Volume"])
+    with open(f"{test.symbol}.csv", "w", newline='') as out_file:
+        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
+                                "Timestamp", "Open", "Close", "High", "Low", "Volume"])
         writer.writeheader()
         for row in data:
             writer.writerow(row)
