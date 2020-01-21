@@ -1,12 +1,12 @@
+import csv
 import logging
 import os
-import psycopg2
-import requests
-import csv
-
 from datetime import datetime
 
-from config import dbsettings, pair_table
+import psycopg2
+import requests
+
+from webapp.config import dbsettings, pair_table
 
 now = datetime.now()
 logging.basicConfig(filename=f"{os.getcwd()}\\logs\\{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,

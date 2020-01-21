@@ -1,0 +1,5 @@
+https://wtforms.readthedocs.io/en/stable/widgets.html
+http://wtforms.simplecodes.com/docs/1.0.1/crash_course.html
+https://tech-geek.ru/wtforms/
+https://qna.habr.com/q/196509
+
