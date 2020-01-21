@@ -33,23 +33,16 @@ class CryptoData:
         try:
             get_utc_time = requests.get("https://yandex.com/time/sync.json")
             get_utc_time.raise_for_status()
-        except (
-            requests.exceptions.RequestException,
-            requests.exceptions.HTTPError,
-        ) as err:
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as err:
             logging.error(f"GET TIME ERROR: {err}")
             return False
         get_utc_time = get_utc_time.json()
         # Забираем и форматируем Timestamp (отбрасываем милисекунды)
         utc_ts = int(str(get_utc_time["time"])[:-3])
         # Получаем текущую минуту
-        current_minute_time = datetime.fromtimestamp(
-            utc_ts).strftime("%Y-%m-%d %H:%M")
+        current_minute_time = datetime.fromtimestamp(utc_ts).strftime("%Y-%m-%d %H:%M")
         # Получаем timestamp предыдущей минуты
-        ts = int(
-            datetime.strptime(current_minute_time,
-                              "%Y-%m-%d %H:%M").timestamp() - 60
-        )
+        ts = int(datetime.strptime(current_minute_time, "%Y-%m-%d %H:%M").timestamp() - 60)
         logging.info(f"Formed candle time: {ts}")
         return ts
 
@@ -178,11 +171,6 @@ class CryptoData:
             elif item["Timestamp"] == raw_data[-1]["Timestamp"]:
                 candle_list[i].update(
                     {"Close": raw_data[id-1]["Close"], "High": candle_high, "Low": candle_low, "Volume": candle_vol})
-                candle_time = item["Timestamp"]
-                candle_open = item["Open"]
-                candle_high = item["High"]
-                candle_low = item["Low"]
-                candle_vol = 0
         return candle_list
 
     # def __convert_timestamp__(self, timestamp_data: int):
