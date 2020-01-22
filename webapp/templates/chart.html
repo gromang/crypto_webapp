@@ -1,9 +1,21 @@
-<html>
-    <head>
-        <title>{{ page_title }}</title>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    </head>
-    <body>
-        <div>{{ chart|safe }}</div>
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block plot_js %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block chart_menu %}
+<form action="url_for('chart')" method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.pair() }}
+        {{ form.interval() }}
+        {{ form.depth() }}
+        {{ form.submit() }}
+    </div>
+</form>
+{% endblock %}
+
+{% block chart %}
+<div>{{ chart|safe }}</div>
+{% endblock %}

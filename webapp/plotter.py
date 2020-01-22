@@ -4,7 +4,8 @@ from plotly import offline
 
 from webapp.get_data import CryptoData
 
-def candle_chart(pair : str, interval : int, depth : int):
+
+def candle_chart(pair: str, interval: int, depth: int):
     crypto_data = CryptoData(pair, interval, depth).data_for_plotly()
     #fig = make_subplots(rows=2, cols=1)
     fig = go.Figure(data=[go.Candlestick(
