@@ -16,7 +16,8 @@ def candle_chart(pair : str, interval : int, depth : int):
         layout=go.Layout(
             # xaxis=dict(showgrid=False),
             # yaxis=dict(showgrid=False),
-            template="plotly_dark"
+            template="plotly_dark",
+
     ))
     #fig.show()
     div = offline.plot(fig, include_plotlyjs=False, output_type='div')
