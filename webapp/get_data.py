@@ -9,7 +9,7 @@ import requests
 from webapp.config import dbsettings, pair_table
 
 now = datetime.now()
-logging.basicConfig(filename=f"{os.getcwd()}\\logs\\{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,
+logging.basicConfig(filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,
                     filemode="a", format='%(levelname)s %(asctime)s : %(message)s')
 logging.info(f'-------------------{now}-------------------')
 
