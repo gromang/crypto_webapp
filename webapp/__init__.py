@@ -11,6 +11,7 @@ def create_app():
     @app.route('/')
     def index():
         title = "CryptoCandle"
+        
         return render_template('index.html', page_title=title)
 
     @app.route('/api', methods=["GET"])
@@ -26,20 +27,20 @@ def create_app():
     def chart():
         title = "Chart"
         chart_menu = ChartForm()
-        # if chart_menu.is_submitted():
-        #     interval = intervals[chart_menu.interval.data]
-        #     pair = str(chart_menu.pair.data)
-        #     depth = int(chart_menu.depth.data)
-        # else:
-        #     interval = intervals[chart_menu.interval.default]
-        #     pair = str(chart_menu.pair.default)
-        #     depth = int(chart_menu.depth.default)
+        if chart_menu.is_submitted():
+            interval = intervals[chart_menu.interval.data]
+            pair = str(chart_menu.pair.data)
+            depth = int(chart_menu.depth.data)
+        else:
+            interval = intervals[chart_menu.interval.default]
+            pair = str(chart_menu.pair.default)
+            depth = int(chart_menu.depth.default)
 
-        #chart = candle_chart(pair, interval, depth)
+        chart = candle_chart(pair, interval, depth)
         return render_template(
             'chart.html',
             page_title=title,
-            #chart=chart,
+            chart=chart,
             form=chart_menu)
 
     @app.route('/demo')
@@ -47,5 +48,11 @@ def create_app():
         title = "Demo"
         chart = candle_chart("BTCUSD", 30, 50)
         return render_template('demo.html', page_title=title, chart=chart)
+
+    @app.route('/chart_example')
+    def chart_example():
+        title = "Example"
+        chart = candle_chart("BTCUSD", 30, 50)
+        return render_template('chart_example.html', page_title=title, chart=chart)
 
     return app
