@@ -9,9 +9,9 @@ import requests
 from webapp.config import dbsettings, pair_table
 
 now = datetime.now()
-logging.basicConfig(filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d__%H')}.log", level=logging.INFO,
-                    filemode="a", format='%(levelname)s %(asctime)s : %(message)s')
-logging.info(f'-------------------{now}-------------------')
+logging.basicConfig(filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log", level=logging.INFO,
+                    filemode="w", format='%(levelname)s %(asctime)s : %(message)s')
+logging.info(f'\n\n_______________________________________________________________________________________________________________')
 
 
 class CryptoData:
@@ -28,6 +28,7 @@ class CryptoData:
         self.interval = interval
         self.depth = depth
         self.table_name = pair_table[self.symbol]
+        logging.info(f"_init_ : \nSymbol : {self.symbol}\nInterval : {self.interval}\nDepth : {self.depth}\nTable name: {self.table_name}")
 
     def __get_previous_candle_time__(self):
         try:
@@ -55,6 +56,7 @@ class CryptoData:
                 host=dbsettings['host'],
                 port=dbsettings['port'],
             )
+            logging.info("Connection to base - successfull")
             return conn
         except psycopg2.Error as e:
             # Обратить внимание, что при отсутсвии коннекта -ошибка в лог не пишется, исправить
@@ -69,6 +71,7 @@ class CryptoData:
                     f'''SELECT "Timestamp" FROM {self.table_name} WHERE id=(SELECT max(id) FROM {self.table_name})'''
                 )
                 timestamp = curs.fetchone()[0]
+                logging.info(f"Function __get_last_time__ : return timestamp {timestamp}")
                 return timestamp
         logging.error("get_last_time Error")
         return False
@@ -90,6 +93,7 @@ class CryptoData:
             current_timestamp).strftime("%M"))
         current_hour = int(datetime.fromtimestamp(
             current_timestamp).strftime("%H"))
+        logging.info(f"Function __get_last_interval__ :\ninterval :\t{interval} min\ncurrent_timestamp :\t{current_timestamp} ({datetime.fromtimestamp(current_timestamp).strftime('%d-%m %H:%M')})\ncurrent_hour :\t{current_hour}\ncurrent_minute :\t{current_minute}")
         # Если интервал - минутный, то достаточно вернуть текущее время
         if interval == 1:
             difference = 0
@@ -103,6 +107,7 @@ class CryptoData:
         begin_interval_timestamp = current_timestamp - difference
         last_interval = {"begin": begin_interval_timestamp,
                          "end": current_timestamp}
+        logging.info(f"Function __get_last_interval__ :\ndifference :\t{difference} \t({difference/60})\nbegin_interval_timestamp :\t{begin_interval_timestamp} ({datetime.fromtimestamp(begin_interval_timestamp).strftime('%d-%m %H:%M')})\nlast_interval :\t{last_interval}")
         return last_interval
 
     def __get_data_edges__(self):
@@ -110,27 +115,28 @@ class CryptoData:
         first_edge_data = last_interval['begin'] - self.interval*self.depth*60
         last_edge_data = last_interval['end']
         data_edges = {"begin": first_edge_data, "end": last_edge_data}
+        logging.info(f"Function __get_data_edges__ :\nlast_interval {last_interval}\nfirst_edge_data {first_edge_data} ({datetime.fromtimestamp(first_edge_data).strftime('%d-%m %H:%M')})\nlast_edge_data {last_edge_data} ({datetime.fromtimestamp(last_edge_data).strftime('%d-%m %H:%M')})\ndata_edges {data_edges}")
         return data_edges
 
     def get_raw_data(self):
         data_edges = self.__get_data_edges__()
         raw_data_list = []
+        logging.info(f"Function get_raw_data :\ndata_edges {data_edges}\nraw_data_list {raw_data_list} ")
         with self.__connection_to_base__() as conn:
             with conn.cursor() as curs:
                 curs.execute(
-                    f'''SELECT * FROM {self.table_name} WHERE "Timestamp" >= {data_edges['begin']}'''
+                    f'''SELECT * FROM {self.table_name} WHERE "Timestamp" >= {data_edges['begin']} ORDER BY "Timestamp"'''
                 )
                 for record in curs:
-                    #value = datetime.fromtimestamp(record[1])
                     raw_data_list.append({
                         "Timestamp": int(record[1]),
-                        # "Time": value.strftime('%d-%m-%Y %H:%M:%S'),
                         "Open": float(record[2]),
                         "Close": float(record[3]),
                         "High": float(record[4]),
                         "Low": float(record[5]),
                         "Volume": float(record[6])
                     })
+        logging.info(f"Function get_raw_data complete. raw_data_list consists of {len(raw_data_list)} elements")
         return raw_data_list
 
     def __check_raw_data__(self): pass
@@ -171,6 +177,7 @@ class CryptoData:
             elif item["Timestamp"] == raw_data[-1]["Timestamp"]:
                 candle_list[i].update(
                     {"Close": raw_data[id-1]["Close"], "High": candle_high, "Low": candle_low, "Volume": candle_vol})
+        logging.info(f"Function make_new_candles_dict complete. candle_list consists of {len(candle_list)} elements")
         return candle_list
 
     # def __convert_timestamp__(self, timestamp_data: int):
@@ -182,8 +189,8 @@ class CryptoData:
     #     return new_time
 
     def __convert_timestamp__(self, timestamp_data: int):
-        new_time = datetime.fromtimestamp(
-            timestamp_data).strftime('%d-%m %H:%M')
+        new_time = datetime.fromtimestamp(timestamp_data).strftime('%d-%m %H:%M')
+        #logging.info(f"Function __convert_timestamp__ return new_time {new_time}")
         return new_time
 
     def data_for_plotly(self):
@@ -239,16 +246,43 @@ class CryptoData:
 
         plot_data = {"datetime": time_list, "open": open_list, "close": close_list,
                      "high": high_list, "low": low_list, "volume": vol_list}
-
+        logging.info(f"Function data_for_plotly complete. plot_data consists of {len(plot_data['datetime'])} elements")
         return plot_data
 
 
 if __name__ == "__main__":
-    test = CryptoData("LTCUSD", 30, 20)
-    data = test.get_raw_data()
-    with open(f"{test.symbol}.csv", "w", newline='') as out_file:
+    test = CryptoData("BTCUSD", 30, 50)
+    raw_data = test.get_raw_data()
+    candle_data = test.make_new_candles_dict()
+    plot_data = test.data_for_plotly()
+
+    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_raw_data.csv", "w", newline='') as out_file:
         writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
                                 "Timestamp", "Open", "Close", "High", "Low", "Volume"])
         writer.writeheader()
-        for row in data:
+        for row in raw_data:
             writer.writerow(row)
+
+    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_{test.interval}_new_candles_dict.csv", "w", newline='') as out_file:
+        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
+                                "Timestamp", "Open", "Close", "High", "Low", "Volume"])
+        writer.writeheader()
+        for row in candle_data:
+            writer.writerow(row)
+    
+    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_{test.interval}_plot_data.csv", "w", newline='') as out_file:
+        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
+                                "datetime", "open", "close", "high", "low", "volume"])
+        writer.writeheader()
+        length = len(plot_data["datetime"])
+        for i in range(0,length-1):
+            row = {
+                "datetime":plot_data["datetime"][i],
+                "open": plot_data["open"][i],
+                "close": plot_data["close"][i],
+                "high": plot_data["high"][i],
+                "low": plot_data["low"][i],
+                "volume": plot_data["volume"][i],
+            }
+            writer.writerow(row)
+    
