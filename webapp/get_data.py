@@ -9,7 +9,7 @@ import requests
 from webapp.config import dbsettings, pair_table
 
 now = datetime.now()
-logging.basicConfig(filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log", level=logging.INFO,
+logging.basicConfig(filename=f"{os.getcwd()}/logs/log/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log", level=logging.INFO,
                     filemode="w", format='%(levelname)s %(asctime)s : %(message)s')
 logging.info(f'\n\n_______________________________________________________________________________________________________________')
 
@@ -255,22 +255,22 @@ if __name__ == "__main__":
     raw_data = test.get_raw_data()
     candle_data = test.make_new_candles_dict()
     plot_data = test.data_for_plotly()
+    time_now = now.strftime('%Y-%m-%d_%H_%M')
+    fname = f"{os.getcwd()}/logs/csv/{time_now}__{test.symbol}_{test.interval}"
 
-    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_raw_data.csv", "w", newline='') as out_file:
-        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
+    def csv_writer(f_name, data, data_name):
+        file_name = f"{f_name}_{data_name}.csv"
+        with open(file_name, "w", newline='') as out_file:
+            writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
                                 "Timestamp", "Open", "Close", "High", "Low", "Volume"])
-        writer.writeheader()
-        for row in raw_data:
-            writer.writerow(row)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
 
-    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_{test.interval}_new_candles_dict.csv", "w", newline='') as out_file:
-        writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
-                                "Timestamp", "Open", "Close", "High", "Low", "Volume"])
-        writer.writeheader()
-        for row in candle_data:
-            writer.writerow(row)
+    csv_writer(fname, raw_data, "raw_data")
+    csv_writer(fname, candle_data, "candle_data")
     
-    with open(f"{now.strftime('%Y-%m-%d_%H_%M')}__{test.symbol}_{test.interval}_plot_data.csv", "w", newline='') as out_file:
+    with open(f"{fname}_plot_data.csv", "w", newline='') as out_file:
         writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
                                 "datetime", "open", "close", "high", "low", "volume"])
         writer.writeheader()
@@ -285,4 +285,6 @@ if __name__ == "__main__":
                 "volume": plot_data["volume"][i],
             }
             writer.writerow(row)
+
+    
     

@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = "biliberda12#vsyakaya#&&??herase"
+SECRET_KEY = os.getenv("SKEY")
+
+SQLALCHEMY_DATABASE_URI = f"postgresql://{os.getenv('USER')}:{os.getenv('PASSWORD')}@{os.getenv('HOST')}:{os.getenv('PORT')}/{os.getenv('DBNAME')}"
 
 dbsettings = {'database': os.getenv("DBNAME"),
               'user': os.getenv("USER"),
@@ -12,6 +14,8 @@ dbsettings = {'database': os.getenv("DBNAME"),
               'host': os.getenv("HOST"),
               'port': os.getenv("PORT"),
               }
+
+
 
 pair_table = {
     "btcusd": "data_btc",
@@ -38,3 +42,5 @@ depth_limits = [300, 200, 100, 80, 60, 50, 40, 30, 20, 10, 5]
 
 if __name__ == "__main__":
     pass
+
+

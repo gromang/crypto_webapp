@@ -1,23 +1,43 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField
+from wtforms import SubmitField, SelectField, StringField, PasswordField
+from wtforms.validators import DataRequired
 
 from webapp.config import depth_limits, intervals, traiding_pairs
 
+def to_tuple(data):
+    tuple_list = []
+    if type(data) == list:
+        for k in data:
+            k = str(k)
+            tuple_list.append((k,k))
+    elif type(data) == dict:
+        for k in data.keys():
+            tuple_list.append((k,k))
+    return tuple_list
+
+interval_choice = to_tuple(intervals)
+pair_choice = to_tuple(traiding_pairs)
+depth_choice = to_tuple(depth_limits)
 
 class ChartForm(FlaskForm):
     interval = SelectField(
         label="Интервал свечи",
-        choices=list(intervals.keys()),
-        default=list(intervals.keys())[2],
+        choices=interval_choice,
+        default=interval_choice[2][0],
         description="Интервал свечи")
     pair = SelectField(
         label="Торговый инструмент",
-        choices=traiding_pairs,
-        default=traiding_pairs[0],
+        choices=pair_choice,
+        default=pair_choice[0][0],
         description="Торговый инструмент")
     depth = SelectField(
         label="Глубина истории",
-        choices=depth_limits,
-        default=depth_limits[-3],
+        choices=depth_choice,
+        default=depth_choice[-3][0],
         description="Глубина истории")
     submit = SubmitField('Get Chart')
+
+class LoginForm(FlaskForm):
+    username = StringField('Имя пользователя', validators=[DataRequired()], render_kw={"class": "form-control"})
+    password = PasswordField('Пароль', validators=[DataRequired()], render_kw={"class": "form-control"})
+    submit = SubmitField('Отправить', render_kw={"class": "btn btn-primary"})
