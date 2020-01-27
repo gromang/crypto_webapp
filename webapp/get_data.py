@@ -189,8 +189,7 @@ class CryptoData:
     #     return new_time
 
     def __convert_timestamp__(self, timestamp_data: int):
-        new_time = datetime.fromtimestamp(timestamp_data).strftime('%d-%m %H:%M')
-        #logging.info(f"Function __convert_timestamp__ return new_time {new_time}")
+        new_time = datetime.fromtimestamp(timestamp_data)
         return new_time
 
     def data_for_plotly(self):

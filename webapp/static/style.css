@@ -1,3 +1,4 @@
+
 body {
     background: radial-gradient(circle farthest-corner at 100px 50px, #FBF2EB, #352A3B);
     }
@@ -10,5 +11,6 @@ section {
     top: 50%;
     left: 50%;
     margin-right: -50%;
-    transform: translate(-50%, -50%) 
+    transform: translate(-50%, -50%);
+    
     }
