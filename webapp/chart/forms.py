@@ -1,23 +1,25 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField, StringField, PasswordField
-from wtforms.validators import DataRequired
+from wtforms import SelectField, SubmitField
 
 from webapp.config import depth_limits, intervals, traiding_pairs
+
 
 def to_tuple(data):
     tuple_list = []
     if type(data) == list:
         for k in data:
             k = str(k)
-            tuple_list.append((k,k))
+            tuple_list.append((k, k))
     elif type(data) == dict:
         for k in data.keys():
-            tuple_list.append((k,k))
+            tuple_list.append((k, k))
     return tuple_list
+
 
 interval_choice = to_tuple(intervals)
 pair_choice = to_tuple(traiding_pairs)
 depth_choice = to_tuple(depth_limits)
+
 
 class ChartForm(FlaskForm):
     interval = SelectField(
@@ -36,8 +38,3 @@ class ChartForm(FlaskForm):
         default=depth_choice[-3][0],
         description="Глубина истории")
     submit = SubmitField('Get Chart')
-
-class LoginForm(FlaskForm):
-    username = StringField('Имя пользователя', validators=[DataRequired()], render_kw={"class": "form-control"})
-    password = PasswordField('Пароль', validators=[DataRequired()], render_kw={"class": "form-control"})
-    submit = SubmitField('Отправить', render_kw={"class": "btn btn-primary"})

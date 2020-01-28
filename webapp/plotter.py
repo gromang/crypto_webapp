@@ -16,8 +16,10 @@ def candle_chart(pair: str, interval: int, depth: int):
             layout=go.Layout(
                 autosize=True,
                 xaxis=dict(showgrid=True),
-                yaxis=dict(showgrid=True),
+                yaxis=dict(showgrid=True, side="right"),
                 template="plotly_dark",
+                plot_bgcolor="#343a40",
+                paper_bgcolor="#343a40",
                 margin=go.layout.Margin(l=5, r=15, b=10, t=30, pad=10),
                 xaxis_rangeslider_visible=False,
                 title={
