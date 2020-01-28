@@ -14,6 +14,7 @@ def candle_chart(pair: str, interval: int, depth: int):
                     low=crypto_data["low"],
                     close=crypto_data["close"])],
             layout=go.Layout(
+                autosize=True,
                 xaxis=dict(showgrid=True),
                 yaxis=dict(showgrid=True),
                 template="plotly_dark",

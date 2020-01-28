@@ -16,11 +16,17 @@
 </head>
 
 <body>
-    {% block content %}{% endblock %}
-    {% include 'menu.html' %}
-    {% block chart_menu %}{% endblock %}
-    {% block chart %}{% endblock %}
     
+    {% include 'menu.html' %}
+    
+    {% block content %}{% endblock %}
+    
+    {% block chart_menu %}{% endblock %}
+    <div style="height: 85vh;">
+        <div id="plot" style="height: inherit;">
+        {% block chart %}{% endblock %}
+        </div>
+    </div>
 
 
     <!-- Optional JavaScript -->
