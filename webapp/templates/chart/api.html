@@ -5,5 +5,9 @@
 {% endblock %}
 
 {% block chart %}
-<div>{{ chart|safe }}</div>
+<div style="height: 85vh;">
+    <div id="plot" style="height: inherit;">
+        {{ chart|safe }}
+    </div>
+</div>
 {% endblock %}

@@ -16,17 +16,14 @@
 </head>
 
 <body class="bg-dark">
-    {% include 'menu.html' %}
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
-    {% block chart_menu %}{% endblock %}
-    <div style="height: 85vh;">
-        <div id="plot" style="height: inherit;">
-            {% block chart %}{% endblock %}
-        </div>
-    </div>
 
+    {% include 'menu.html' %}
+
+    {% block content %}{% endblock %}
+
+    {% block chart_menu %}{% endblock %}
+
+    {% block chart %}{% endblock %}
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
