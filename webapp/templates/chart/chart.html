@@ -5,21 +5,30 @@
 {% endblock %}
 
 {% block chart_menu %}
-<form action="" method="POST">
+<form class="form-inline" action="" method="POST">
     {{ form.hidden_tag() }}
-    <div class="form-group">
-        {{ form.pair() }}
-        {{ form.interval() }}
-        {{ form.depth() }}
-        {{ form.submit() }}
+    <div class="row mx-auto">
+        <div class="col px-1">
+            {{ form.pair() }}
+        </div>
+        <div class="col px-1">
+            {{ form.interval() }}
+        </div>
+        <div class="col px-1">
+            {{ form.depth() }}
+        </div>
+        <div class="col px-1">
+            {{ form.submit() }}
+        </div>
+
+
+
     </div>
 </form>
 {% endblock %}
 
 {% block chart %}
-<div style="height: 85vh;">
-    <div id="plot" style="height: inherit;">
-        {{ chart|safe }}
-    </div>
+<div class="plot">
+    {{ chart|safe }}
 </div>
 {% endblock %}

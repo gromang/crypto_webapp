@@ -1,2 +1,27 @@
+body {
+    color: #ffffff;
+}
 
+.plot {
+    height: 85vh;
+}
 
+#temp_text, #text_404 {
+    height: 85vh;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#about {
+    font-size: 1.25rem;
+    font-weight: 300;
+}
+
+#main_page_text {
+    position: relative;
+    top: 30%;
+    height: 85vh;
+    text-align: center;
+}

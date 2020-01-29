@@ -26,15 +26,33 @@ class ChartForm(FlaskForm):
         label="Интервал свечи",
         choices=interval_choice,
         default=interval_choice[2][0],
-        description="Интервал свечи")
+        description="Интервал свечи",
+        render_kw={
+            "class": "form-control",
+            "id": "exampleFormControlSelect1"
+            }
+        )
     pair = SelectField(
         label="Торговый инструмент",
         choices=pair_choice,
         default=pair_choice[0][0],
-        description="Торговый инструмент")
+        description="Торговый инструмент",
+        render_kw={
+            "class": "form-control",
+            "id": "exampleFormControlSelect1"
+            }
+        )
     depth = SelectField(
         label="Глубина истории",
         choices=depth_choice,
         default=depth_choice[-3][0],
-        description="Глубина истории")
-    submit = SubmitField('Get Chart')
+        description="Глубина истории",
+        render_kw={
+            "class": "form-control",
+            "id": "exampleFormControlSelect1"
+            }
+        )
+    submit = SubmitField(
+        'Get Chart',
+        render_kw={"class": "btn btn-light"}
+        )

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <div class="row">
         <div class="col-2"></div>
         <div class="col-8">
@@ -13,10 +14,16 @@
             </div>
             {% endif %}
             {% endwith %}
-            <div style="height: 85vh; text-align: center; display: flex; justify-content: center; align-items: center;">
-                <h1>Crypto Candle Chart</h1>
+            <div id="main_page_text">
+                <div>
+                    <h1>Diagram</h1>
+                </div>
+
+                <p id="about">Сервис Diagram собирает торговые данные из нескольких крупных криптовалютных бирж и
+                    агрегирует их в единый график для каждой криптовлютной пары</p>
             </div>
         </div>
         <div class="col-2"> </div>
     </div>
+</div>
 {% endblock %}

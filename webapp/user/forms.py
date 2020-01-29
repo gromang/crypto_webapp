@@ -19,7 +19,7 @@ class LoginForm(FlaskForm):
         render_kw={"class": "form-check-input"})
     submit = SubmitField(
         'Отправить',
-        render_kw={"class": "btn btn-primary"})
+        render_kw={"class": "btn btn-light"})
 
 
 class RegistrationForm(FlaskForm):
@@ -41,7 +41,7 @@ class RegistrationForm(FlaskForm):
         render_kw={"class": "form-control"})
     submit = SubmitField(
         'Отправить',
-        render_kw={"class": "btn btn-primary"})
+        render_kw={"class": "btn btn-light"})
 
     def validate_username(self, username):
         users_count = User.query.filter_by(username=username.data).count()
