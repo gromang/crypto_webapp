@@ -7,6 +7,7 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SKEY")
 REMEMBER_COOKIE_DURATION = timedelta(days=5)
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_DATABASE_URI = f"postgresql://{os.getenv('USER')}:" \
     f"{os.getenv('PASSWORD')}@{os.getenv('HOST')}:" \
     f"{os.getenv('PORT')}/{os.getenv('DBNAME')}"
