@@ -14,6 +14,18 @@ def candle_chart(pair: str, interval: int, depth: int):
                     low=crypto_data["low"],
                     close=crypto_data["close"])],
             layout=go.Layout(
+                annotations=[
+                    go.layout.Annotation(
+                        name="chart_name",
+                        text = f"{pair} {interval}",
+                        opacity=0.3,
+                        font=dict(color='white', size=30),
+                        xref="paper",
+                        yref="paper",
+                        x=0.5,
+                        y=0.9,
+                        showarrow=False,)
+                    ],
                 autosize=True,
                 xaxis=dict(showgrid=True),
                 yaxis=dict(showgrid=True, side="right"),
@@ -22,12 +34,7 @@ def candle_chart(pair: str, interval: int, depth: int):
                 paper_bgcolor="#343a40",
                 margin=go.layout.Margin(l=5, r=15, b=10, t=30, pad=10),
                 xaxis_rangeslider_visible=False,
-                title={
-                    'text': f"{pair} {interval}",
-                    'y': 0.98,
-                    'x': 0.5,
-                    'xanchor': 'center',
-                    'yanchor': 'top'}),
+                 ),
     )
 
     div = offline.plot(fig, include_plotlyjs=False, output_type='div')
