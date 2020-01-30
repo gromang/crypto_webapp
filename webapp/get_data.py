@@ -9,9 +9,13 @@ import requests
 from webapp.config import dbsettings, pair_table
 
 now = datetime.now()
-logging.basicConfig(filename=f"{os.getcwd()}/logs/log/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log", level=logging.INFO,
-                    filemode="w", format='%(levelname)s %(asctime)s : %(message)s')
-logging.info(f'\n\n_______________________________________________________________________________________________________________')
+logging.basicConfig(
+    filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log",
+    level=logging.INFO,
+    filemode="w",
+    format='%(levelname)s %(asctime)s : %(message)s'
+    )
+logging.info(f"\n\n_________________________________________________________")
 
 
 class CryptoData:
@@ -35,7 +39,8 @@ class CryptoData:
         try:
             get_utc_time = requests.get("https://yandex.com/time/sync.json")
             get_utc_time.raise_for_status()
-        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as err:
+        except (requests.exceptions.RequestException,
+                requests.exceptions.HTTPError) as err:
             logging.error(f"GET TIME ERROR: {err}")
             return False
         get_utc_time = get_utc_time.json()
@@ -60,7 +65,8 @@ class CryptoData:
             logging.info("Connection to base - successfull")
             return conn
         except psycopg2.Error as e:
-            # Обратить внимание, что при отсутсвии коннекта -ошибка в лог не пишется, исправить
+            # Обратить внимание, что при отсутсвии коннекта
+            #  -ошибка в лог не пишется, исправить
             logging.error(e.pgerror())
             return False
 
@@ -262,22 +268,22 @@ if __name__ == "__main__":
         file_name = f"{f_name}_{data_name}.csv"
         with open(file_name, "w", newline='') as out_file:
             writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
-                                "Timestamp", "Open", "Close", "High", "Low", "Volume"])
+                        "Timestamp", "Open", "Close", "High", "Low", "Volume"])
             writer.writeheader()
             for row in data:
                 writer.writerow(row)
 
     csv_writer(fname, raw_data, "raw_data")
     csv_writer(fname, candle_data, "candle_data")
-    
+
     with open(f"{fname}_plot_data.csv", "w", newline='') as out_file:
         writer = csv.DictWriter(out_file, delimiter='\t', fieldnames=[
-                                "datetime", "open", "close", "high", "low", "volume"])
+                        "datetime", "open", "close", "high", "low", "volume"])
         writer.writeheader()
         length = len(plot_data["datetime"])
-        for i in range(0,length-1):
+        for i in range(0, length-1):
             row = {
-                "datetime":plot_data["datetime"][i],
+                "datetime": plot_data["datetime"][i],
                 "open": plot_data["open"][i],
                 "close": plot_data["close"][i],
                 "high": plot_data["high"][i],
@@ -285,6 +291,3 @@ if __name__ == "__main__":
                 "volume": plot_data["volume"][i],
             }
             writer.writerow(row)
-
-    
-    
