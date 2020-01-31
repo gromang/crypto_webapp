@@ -225,6 +225,13 @@ class CryptoData:
             return False
 
     def get_raw_data(self):
+        '''
+        Метод возращает сырые данные из базы данных.
+        Тип возвращаемых данных - список сло словарями,
+        содержащими параметры минутных свечей.
+        Начало и конец данных определяются методом
+        __get_data_edges__()
+        '''
         data_edges = self.__get_data_edges__()
         if data_edges:
             raw_data_list = []
@@ -233,28 +240,32 @@ class CryptoData:
                 f"data_edges {data_edges}\n"
                 f"raw_data_list {raw_data_list}"
                 )
-            with self.__connection_to_base__() as conn:
-                with conn.cursor() as curs:
-                    curs.execute(
-                        f'SELECT * FROM {self.table_name} '
-                        f'WHERE "Timestamp" >= {data_edges["begin"]} '
-                        f'ORDER BY "Timestamp"'
+            try:
+                with self.__connection_to_base__() as conn:
+                    with conn.cursor() as curs:
+                        curs.execute(
+                            f'SELECT * FROM {self.table_name} '
+                            f'WHERE "Timestamp" >= {data_edges["begin"]} '
+                            f'ORDER BY "Timestamp"'
+                        )
+                        for record in curs:
+                            raw_data_list.append({
+                                "Timestamp": int(record[1]),
+                                "Open": float(record[2]),
+                                "Close": float(record[3]),
+                                "High": float(record[4]),
+                                "Low": float(record[5]),
+                                "Volume": float(record[6])
+                            })
+                logging.info(
+                    f"Function get_raw_data complete. "
+                    f"raw_data_list consists of "
+                    f"{len(raw_data_list)} elements"
                     )
-                    for record in curs:
-                        raw_data_list.append({
-                            "Timestamp": int(record[1]),
-                            "Open": float(record[2]),
-                            "Close": float(record[3]),
-                            "High": float(record[4]),
-                            "Low": float(record[5]),
-                            "Volume": float(record[6])
-                        })
-            logging.info(
-                f"Function get_raw_data complete. "
-                f"raw_data_list consists of "
-                f"{len(raw_data_list)} elements"
-                )
-            return raw_data_list
+                return raw_data_list
+            except psycopg2.Error as e:
+                logging.error(f"get_raw_data Error\n{e}")
+                return False
         else:
             return False
 
@@ -263,6 +274,11 @@ class CryptoData:
     def get_new_candles_sql(self): pass
 
     def make_new_candles_dict(self):
+        '''
+        Метод из полученных через get_raw_data()
+        минутных свечей собирает свечи с заданным интервалом
+        и возращает список словарей с параметрами новых свечей.
+        '''
         raw_data = self.get_raw_data()
 
         if raw_data:
@@ -326,6 +342,13 @@ class CryptoData:
         return new_time
 
     def data_for_plotly(self):
+        '''
+        Метод из полученных через get_raw_data()
+        минутных свечей собирает свечи с заданным интервалом
+        и возращает словарь с параметрами новых свечей.
+        Данный словарь будет пригоден для использования
+        в библиотеке plotly
+        '''
         raw_data = self.get_raw_data()
 
         if raw_data:
