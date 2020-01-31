@@ -9,13 +9,13 @@ import requests
 from webapp.config import dbsettings, pair_table
 
 now = dt.now()
+bigline = "\n\n______________________________________________________________"
 logging.basicConfig(
     filename=f"{os.getcwd()}/logs/{now.strftime('%Y-%m-%d_%H_%M_%S_%f')}.log",
     level=logging.INFO,
     filemode="w",
     format='%(levelname)s %(asctime)s : %(message)s'
     )
-logging.info(f"\n\n_________________________________________________________")
 
 
 class CryptoData:
@@ -58,6 +58,7 @@ class CryptoData:
         self.interval = interval
         self.depth = depth
         self.table_name = pair_table[self.symbol]
+        logging.info(bigline)
         logging.info(f'''_init_ :
                         Symbol : {self.symbol}
                         Interval : {self.interval}
