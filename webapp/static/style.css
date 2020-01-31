@@ -6,7 +6,7 @@ body {
     height: 85vh;
 }
 
-#temp_text, #text_404 {
+#temp_text, #text_error {
     height: 85vh;
     text-align: center;
     display: flex;

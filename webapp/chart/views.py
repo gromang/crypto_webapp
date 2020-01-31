@@ -31,15 +31,32 @@ def chart():
         depth = int(chart_menu.depth.default)
 
     chart = candle_chart(pair, interval, depth)
-    return render_template(
-        'chart/chart.html',
-        page_title=title,
-        chart=chart,
-        form=chart_menu)
+    if chart:
+        return render_template(
+            'chart/chart.html',
+            page_title=title,
+            chart=chart,
+            form=chart_menu)
+    else:
+        error_msg = "Что-то сломалось, но мы скоро починим"
+        return render_template(
+            'index/error_page.html',
+            page_title=title,
+            error_msg=error_msg)
 
 
 @blueprint.route('/demo')
 def demo():
     title = "Demo"
     chart = candle_chart("BTCUSD", 30, 50)
-    return render_template('chart/demo.html', page_title=title, chart=chart)
+    if chart:
+        return render_template(
+            'chart/demo.html',
+            page_title=title,
+            chart=chart)
+    else:
+        error_msg = "Что-то сломалось, но мы скоро починим"
+        return render_template(
+            'index/error_page.html',
+            page_title=title,
+            error_msg=error_msg)
